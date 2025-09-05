@@ -1,6 +1,10 @@
-# Albi0
+<div align="center">
 
-可扩展的 Unity 资源提取与更新工具。提供统一的「提取器」与「更新器」插件体系，支持异步下载、manifest版本管理/增量更新与自定义前后处理流程。
+# Albi0
+~~[摸鱼的图书馆管理员](https://wiki.biligame.com/seerplan/%E9%98%BF%E5%B0%94%E6%AF%94%E9%9B%B6)~~<br>
+✨插件化的 Unity 游戏资源更新与提取工具🌙
+
+</div>
 
 ## 功能特性
 

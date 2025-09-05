@@ -8,9 +8,16 @@ version = "0.1.0"
 authors = [
     {name = "Nattsu39", email = "nattsu39@outlook.com"},
 ]
-description = "Extensible Unity Asset Extractor"
+description = "Plugin-based Unity Asset Extractor"
+keywords = ["unity", "asset", "extractor", "plugin", "game", "seer"]
+classifiers = [
+  "Framework :: Robot Framework",
+  "Framework :: Robot Framework :: Library",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+]
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
     "asyncer>=0.0.8",
@@ -25,6 +32,11 @@ dependencies = [
     "slpp>=1.2.3",
     "dataclasses-json>=0.6.7",
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/SeerAPI/albi0"
+"Bug Tracker" = "https://github.com/SeerAPI/albi0/issues"
+"Repository" = "https://github.com/SeerAPI/albi0"
 
 [dependency-groups]
 dev = [
