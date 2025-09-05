@@ -2,8 +2,8 @@ import glob
 import itertools
 from pathlib import Path
 
-import click
 from asyncer import syncify
+import click
 
 from albi0.extract.extractor import extractors
 from albi0.log import logger

@@ -3,9 +3,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import NamedTuple, NewType
 
-import dataclasses_json.cfg
 from dataclasses_json import DataClassJsonMixin
-
+import dataclasses_json.cfg
 
 LocalFileName = NewType("LocalFileName", Path)
 

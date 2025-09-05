@@ -1,8 +1,8 @@
+from pathlib import Path
 from typing import Optional
 
-import click
 from asyncer import syncify
-from pathlib import Path
+import click
 
 from albi0.request import client as httpx_client
 
@@ -38,7 +38,7 @@ async def on_close():
     await httpx_client.aclose()
 
 
-from .commands import extract, update, list_
+from .commands import extract, list_, update
 
 cli.add_command(update)
 cli.add_command(extract)

@@ -1,9 +1,8 @@
 """
 字节数组读写工具类
 """
-import struct
 from enum import Enum
-from typing import Union, List, Optional, Tuple
+import struct
 
 
 def cmp(a: bytes, b: bytes) -> bool:
@@ -24,55 +23,55 @@ class Writer:
     @staticmethod
     def short(value: int, little_endian: bool = True) -> bytes:
         """写入有符号16位整数"""
-        format_str = '<h' if little_endian else '>h'
+        format_str = "<h" if little_endian else ">h"
         return struct.pack(format_str, value)
 
     @staticmethod
     def ushort(value: int, little_endian: bool = True) -> bytes:
         """写入无符号16位整数"""
-        format_str = '<H' if little_endian else '>H'
+        format_str = "<H" if little_endian else ">H"
         return struct.pack(format_str, value)
 
     @staticmethod
     def int(value: int, little_endian: bool = True) -> bytes:
         """写入有符号32位整数"""
-        format_str = '<i' if little_endian else '>i'
+        format_str = "<i" if little_endian else ">i"
         return struct.pack(format_str, value)
 
     @staticmethod
     def uint(value: "int", little_endian: bool = True) -> bytes:
         """写入无符号32位整数"""
-        format_str = '<I' if little_endian else '>I'
+        format_str = "<I" if little_endian else ">I"
         return struct.pack(format_str, value)
 
     @staticmethod
     def long(value: "int", little_endian: bool = True) -> bytes:
         """写入有符号64位整数"""
-        format_str = '<q' if little_endian else '>q'
+        format_str = "<q" if little_endian else ">q"
         return struct.pack(format_str, value)
 
     @staticmethod
     def ulong(value: "int", little_endian: bool = True) -> bytes:
         """写入无符号64位整数"""
-        format_str = '<Q' if little_endian else '>Q'
+        format_str = "<Q" if little_endian else ">Q"
         return struct.pack(format_str, value)
 
     @staticmethod
     def float(value: float, little_endian: bool = True) -> bytes:
         """写入32位浮点数"""
-        format_str = '<f' if little_endian else '>f'
+        format_str = "<f" if little_endian else ">f"
         return struct.pack(format_str, value)
 
     @staticmethod
     def double(value: "float", little_endian: bool = True) -> bytes:
         """写入64位浮点数"""
-        format_str = '<d' if little_endian else '>d'
+        format_str = "<d" if little_endian else ">d"
         return struct.pack(format_str, value)
 
     @staticmethod
     def text(value: str) -> bytes:
         """写入文本字符串"""
-        return value.encode('utf-8')
+        return value.encode("utf-8")
 
 
 class LengthType(Enum):
@@ -117,7 +116,7 @@ class BytesReader:
         """设置读取位置"""
         self.offset = offset
 
-    def read(self, length: Optional[int] = None, tag: str = "") -> bytes:
+    def read(self, length: int | None = None, tag: str = "") -> bytes:
         """读取指定长度的字节"""
         if length is not None:
             slice_data = self.data[self.offset:self.offset + length]
@@ -140,7 +139,7 @@ class BytesReader:
             raise ValueError(f"Invalid length type: {self.length_type}")
 
         if length > 0:
-            return self.read(length).decode('utf-8')
+            return self.read(length).decode("utf-8")
         else:
             return ""
 
@@ -154,68 +153,68 @@ class BytesReader:
         self.offset += 1
         return value
 
-    def short(self, little_endian: Optional[bool] = None) -> int:
+    def short(self, little_endian: bool | None = None) -> int:
         """读取有符号16位整数"""
         if little_endian is None:
             little_endian = self.little_endian
         data = self.read(2)
-        format_str = '<h' if little_endian else '>h'
+        format_str = "<h" if little_endian else ">h"
         return struct.unpack(format_str, data)[0]
 
-    def ushort(self, little_endian: Optional[bool] = None) -> int:
+    def ushort(self, little_endian: bool | None = None) -> int:
         """读取无符号16位整数"""
         if little_endian is None:
             little_endian = self.little_endian
         data = self.read(2)
-        format_str = '<H' if little_endian else '>H'
+        format_str = "<H" if little_endian else ">H"
         return struct.unpack(format_str, data)[0]
 
-    def int(self, little_endian: Optional[bool] = None) -> int:
+    def int(self, little_endian: bool | None = None) -> int:
         """读取有符号32位整数"""
         if little_endian is None:
             little_endian = self.little_endian
         data = self.read(4)
-        format_str = '<i' if little_endian else '>i'
+        format_str = "<i" if little_endian else ">i"
         return struct.unpack(format_str, data)[0]
 
-    def uint(self, little_endian: Optional[bool] = None) -> "int":
+    def uint(self, little_endian: bool | None = None) -> "int":
         """读取无符号32位整数"""
         if little_endian is None:
             little_endian = self.little_endian
         data = self.read(4)
-        format_str = '<I' if little_endian else '>I'
+        format_str = "<I" if little_endian else ">I"
         return struct.unpack(format_str, data)[0]
 
-    def long(self, little_endian: Optional[bool] = None) -> "int":
+    def long(self, little_endian: bool | None = None) -> "int":
         """读取有符号64位整数"""
         if little_endian is None:
             little_endian = self.little_endian
         data = self.read(8)
-        format_str = '<q' if little_endian else '>q'
+        format_str = "<q" if little_endian else ">q"
         return struct.unpack(format_str, data)[0]
 
-    def ulong(self, little_endian: Optional[bool] = None) -> "int":
+    def ulong(self, little_endian: bool | None = None) -> "int":
         """读取无符号64位整数"""
         if little_endian is None:
             little_endian = self.little_endian
         data = self.read(8)
-        format_str = '<Q' if little_endian else '>Q'
+        format_str = "<Q" if little_endian else ">Q"
         return struct.unpack(format_str, data)[0]
 
-    def float(self, little_endian: Optional[bool] = None) -> float:
+    def float(self, little_endian: bool | None = None) -> float:
         """读取32位浮点数"""
         if little_endian is None:
             little_endian = self.little_endian
         data = self.read(4)
-        format_str = '<f' if little_endian else '>f'
+        format_str = "<f" if little_endian else ">f"
         return struct.unpack(format_str, data)[0]
 
-    def double(self, little_endian: Optional[bool] = None) -> "float":
+    def double(self, little_endian: bool | None = None) -> "float":
         """读取64位浮点数"""
         if little_endian is None:
             little_endian = self.little_endian
         data = self.read(8)
-        format_str = '<d' if little_endian else '>d'
+        format_str = "<d" if little_endian else ">d"
         return struct.unpack(format_str, data)[0]
 
     def png(self) -> bytes:
@@ -231,14 +230,14 @@ class BytesReader:
         # IDAT chunk
         size = self.int(False)
         while size > 0:
-            idat_type = self.read(4).decode('ascii')
+            idat_type = self.read(4).decode("ascii")
             if idat_type != "IDAT":
                 raise ValueError("Invalid PNG IDAT chunk")
 
             self.seek(size + 4)  # data + crc
             size = self.int(False)
 
-        iend = self.read(4).decode('ascii')
+        iend = self.read(4).decode("ascii")
         if iend != "IEND":
             raise ValueError("Invalid PNG IEND chunk")
         self.seek(4)  # crc
@@ -249,7 +248,7 @@ class BytesReader:
 
 
 # 类型定义
-BytesStructSchema = List[Union[bool, int, str, Tuple, bytes, None]]
+BytesStructSchema = list[bool | int | str | tuple | bytes | None]
 
 
 class BundleOptions:
@@ -284,7 +283,7 @@ def bundle_bytes_struct(writer: Writer, schema: BytesStructSchema, tag: str = ""
     if tag:
         tag = f"bundle: {tag}"
 
-    def bundle_string_with_length(value: str, length_type: LengthType) -> List[bytes]:
+    def bundle_string_with_length(value: str, length_type: LengthType) -> list[bytes]:
         """打包带长度前缀的字符串"""
         text_bytes = writer.text(value)
         if length_type == LengthType.BYTE:
@@ -311,21 +310,21 @@ def bundle_bytes_struct(writer: Writer, schema: BytesStructSchema, tag: str = ""
             value = v[1]
             options = v[2] if len(v) > 2 else {}
 
-            if type_name in ['byte', 'short', 'ushort', 'int', 'uint', 'long', 'ulong', 'float', 'double']:
+            if type_name in ["byte", "short", "ushort", "int", "uint", "long", "ulong", "float", "double"]:
                 little_endian = options.get(
-                    'littleEndian', True) if isinstance(options, dict) else True
+                    "littleEndian", True) if isinstance(options, dict) else True
                 writer_method = getattr(writer, type_name)
-                if type_name == 'byte':
+                if type_name == "byte":
                     bytes_list.append(writer_method(value))
                 else:
                     bytes_list.append(writer_method(value, little_endian))
-            elif type_name == 'string':
+            elif type_name == "string":
                 with_length = options.get("withLength", True) if isinstance(
                     options, dict) else True
                 if not with_length:
                     bytes_list.append(writer.text(value))
                 else:
-                    length_type = options.get('lengthType', GlobalLengthType.value) if isinstance(
+                    length_type = options.get("lengthType", GlobalLengthType.value) if isinstance(
                         options, dict) else GlobalLengthType.value
                     bytes_list.extend(
                         bundle_string_with_length(value, length_type))

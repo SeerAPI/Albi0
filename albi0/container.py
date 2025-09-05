@@ -10,6 +10,20 @@ T_Processor = TypeVar("T_Processor", bound=ProcessorProtocol)
 
 
 class ProcessorContainer(dict[str, T_Processor]):
+    """Processor容器，用于存储Updater、Extractor等符合ProcessorProtocol协议的类
+
+    提供了使用'.'简易分组功能，
+    例如::
+
+        from albi0.container import ProcessorContainer
+        container = ProcessorContainer()
+        foo = FooUpdater()
+        bar = BarUpdater()
+        container["newseer.Foo"] = foo
+        container["newseer.Bar"] = bar
+        assert container.get_by_group("newseer") == {foo, bar}
+    """
+
     def get_by_group(self, group_name: str) -> set[T_Processor]:
         """根据组名获取整组Processor"""
         processors = {v for k, v in self.items() if k.split(".")[0] == group_name}

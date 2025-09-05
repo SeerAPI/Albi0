@@ -1,5 +1,5 @@
-import gzip
 from contextlib import suppress
+import gzip
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -14,10 +14,10 @@ from albi0.extract.registry import (
     ObjPreHandlerGroup,
     StopExtractThisObject,
 )
+from albi0.plugins.yooasset_vm import YooVersionManager
 from albi0.typing import ObjectPath
 from albi0.update import Downloader, Updater
 from albi0.utils import remove_all_suffixes
-from albi0.plugins.yooasset_vm import YooVersionManager
 
 if TYPE_CHECKING:
     from UnityPy.classes import TextAsset, Texture2D

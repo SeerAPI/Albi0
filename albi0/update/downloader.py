@@ -1,10 +1,10 @@
 from asyncio import Semaphore
+from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Literal, NamedTuple
 
 import aiofiles
 import anyio
 from httpx import URL
-from pathlib import Path
 from tqdm.asyncio import tqdm
 
 from ..request import client as default_client

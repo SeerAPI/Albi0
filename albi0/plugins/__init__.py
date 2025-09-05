@@ -1,2 +1,3 @@
-from . import seerproject
-from . import newseer
+from . import newseer, seerproject
+
+__all__ = ["newseer", "seerproject"]

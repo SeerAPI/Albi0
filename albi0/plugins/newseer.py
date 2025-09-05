@@ -10,9 +10,9 @@ from albi0.plugins.yooasset_vm import YooVersionManager
 from albi0.typing import ObjectPath
 from albi0.update import Downloader, Updater
 from albi0.update.version import (
+    LocalFileName,
     Manifest,
     ManifestItem,
-    LocalFileName,
 )
 from albi0.utils import join_path, join_url
 

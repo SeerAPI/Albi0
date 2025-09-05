@@ -1,7 +1,7 @@
 import os
 
-import click
 from asyncer import syncify
+import click
 
 from albi0.update import updaters
 from albi0.utils import set_directory

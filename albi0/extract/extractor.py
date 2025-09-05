@@ -2,24 +2,24 @@ from io import BytesIO
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Optional, TypeVar, cast
 
+from tqdm import tqdm
 from UnityPy import Environment
 from UnityPy.environment import reSplit
-from tqdm import tqdm
 
 from albi0.container import ProcessorContainer
 from albi0.log import logger
+from albi0.typing import (
+    DecryptionMethod,
+    ExportHandlerResult,
+    ObjectPath,
+    PathTypes,
+)
 
 from .registry import (
     AssetPostHandlerGroup,
     ExportHandlerGroup,
     ObjPreHandlerGroup,
     StopExtractThisObject,
-)
-from albi0.typing import (
-    DecryptionMethod,
-    PathTypes,
-    ObjectPath,
-    ExportHandlerResult,
 )
 
 if TYPE_CHECKING:

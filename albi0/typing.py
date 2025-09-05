@@ -1,9 +1,8 @@
+from collections.abc import Callable
 import os
 from pathlib import Path, PurePath
-from typing import NewType, Optional, TypeVar
-from collections.abc import Callable
+from typing import NewType, Optional, TypeAlias, TypeVar
 
-from typing import TypeAlias
 from UnityPy.classes import NamedObject
 from UnityPy.files import ObjectReader, SerializedFile
 
