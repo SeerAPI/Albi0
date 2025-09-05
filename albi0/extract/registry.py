@@ -103,6 +103,13 @@ class ObjPreHandlerGroup(MultiValuesDictHandlerGroup[ClassIDType, T_ObjPreHandle
 
 
 class ExportHandlerGroup(DictHandlerGroup[ClassIDType, T_ExportHandler]):
+	"""
+	导出处理器组，用于自定义Unity对象的导出逻辑，
+	key为Unity对象ClassID，value为导出函数。
+
+	当没有对应的handler时，会使用UnityPy的默认导出逻辑。
+	"""
+
 	def __init__(self, mapping: Mapping[ClassIDType, T_ExportHandler] | None = None):
 		super().__init__({**EXPORT_TYPES, **(mapping or {})})
 
