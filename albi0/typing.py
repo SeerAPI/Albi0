@@ -12,19 +12,19 @@ DecryptionMethod: TypeAlias = Callable[[memoryview], memoryview]
 
 DownloadPostProcessMethod = Callable[[bytes], bytes]
 
-ObjectPath = NewType("ObjectPath", PurePath)
+ObjectPath = NewType('ObjectPath', PurePath)
 
-T_PathLike = TypeVar("T_PathLike", str, ObjectPath, os.PathLike)
+T_PathLike = TypeVar('T_PathLike', str, ObjectPath, os.PathLike)
 
-T_NamedObject = TypeVar("T_NamedObject", bound="NamedObject")
+T_NamedObject = TypeVar('T_NamedObject', bound='NamedObject')
 
 T_AssetPostHandler: TypeAlias = Callable[
-    ["ObjectReader", Path], tuple["ObjectReader", Path]
+	['ObjectReader', Path], tuple['ObjectReader', Path]
 ]
 T_ObjPreHandler: TypeAlias = Callable[
-    [T_NamedObject, ObjectPath], tuple[T_NamedObject, ObjectPath]
+	[T_NamedObject, ObjectPath], tuple[T_NamedObject, ObjectPath]
 ]
-ExportHandlerResult: TypeAlias = list[tuple[Optional["SerializedFile"], int]]
+ExportHandlerResult: TypeAlias = list[tuple[Optional['SerializedFile'], int]]
 T_ExportHandler: TypeAlias = Callable[
-    [T_NamedObject, PathTypes, str], ExportHandlerResult
+	[T_NamedObject, PathTypes, str], ExportHandlerResult
 ]
