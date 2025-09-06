@@ -41,24 +41,14 @@ def texture2d_prehandler(
 	return obj, obj_path
 
 
-class NewSeerVersionManager(YooVersionManager):
-	@property
-	def is_version_outdated(self) -> bool:
-		"""如果本地版本不存在或需要更新，返回True，反之返回False"""
-		local_mf = self.load_local_version()
-		if local_mf == '':
-			return True
-
-		return int(local_mf) >= int(self.get_remote_version())
-
-
 Updater(
 	'newseer.default',
 	'赛尔号AB包下载器 DefaultPackage部分',
-	version_manager=NewSeerVersionManager(
+	version_manager=YooVersionManager(
 		'DefaultPackage',
 		remote_path='https://newseer.61.com/Assets/StandaloneWindows64/DefaultPackage/',
 		local_path=Path('./newseer/assetbundles/DefaultPackage/'),
+		version_factory=int,
 	),
 	downloader=downloader,
 )
@@ -67,10 +57,11 @@ Updater(
 Updater(
 	'newseer.pet',
 	'赛尔号AB包下载器 PetAnimPackage部分',
-	version_manager=NewSeerVersionManager(
+	version_manager=YooVersionManager(
 		'PetAnimPackage',
 		remote_path='https://newseer.61.com/Assets/StandaloneWindows64/PetAnimPackage/',
 		local_path=Path('./newseer/assetbundles/PetAnimPackage/'),
+		version_factory=int,
 	),
 	downloader=downloader,
 )
@@ -78,10 +69,11 @@ Updater(
 Updater(
 	'newseer.startup',
 	'赛尔号AB包下载器 StartupPackage部分',
-	version_manager=NewSeerVersionManager(
+	version_manager=YooVersionManager(
 		'StartupPackage',
 		remote_path='https://newseer.61.com/Assets/StandaloneWindows64/StartupPackage/',
 		local_path=Path('./newseer/assetbundles/StartupPackage/'),
+		version_factory=int,
 	),
 	downloader=downloader,
 )

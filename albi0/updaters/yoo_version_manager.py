@@ -1,6 +1,7 @@
+from collections.abc import Callable
 from enum import IntEnum
 from pathlib import Path
-from typing import TypedDict
+from typing import Any, Protocol, TypedDict
 
 import httpx
 from packaging.version import Version
@@ -15,6 +16,29 @@ from albi0.update.version import (
 from albi0.utils import join_path, join_url
 
 
+class VersionProtocol(Protocol):
+	def __init__(self, version: str):
+		pass
+
+	def __lt__(self, other: Any) -> bool:
+		raise NotImplementedError
+
+	def __le__(self, other: Any) -> bool:
+		raise NotImplementedError
+
+	def __gt__(self, other: Any) -> bool:
+		raise NotImplementedError
+
+	def __ge__(self, other: Any) -> bool:
+		raise NotImplementedError
+
+	def __eq__(self, other: object) -> bool:
+		raise NotImplementedError
+
+	def __ne__(self, other: object) -> bool:
+		raise NotImplementedError
+
+
 class OutputNameType(IntEnum):
 	"""输出名称类型枚举"""
 
@@ -25,7 +49,10 @@ class OutputNameType(IntEnum):
 class PackageAssetInfo(TypedDict):
 	"""包资源信息"""
 
+	Address: str
 	AssetPath: str
+	AssetGUID: str | None
+	AssetTags: list[str]
 	BundleID: int
 	DependIDs: list[int]
 
@@ -34,13 +61,14 @@ class PackageBundleInfo(TypedDict):
 	"""包Bundle信息"""
 
 	BundleName: str
-	UnityCRC: int
+	UnityCRC: int | None
 	FileHash: str
 	FileCRC: str
 	FileSize: int
 	IsRawFile: bool
 	LoadMethod: int
 	ReferenceIDs: list[int]
+	Tags: list[str]
 
 
 class PackageManifest(TypedDict):
@@ -70,18 +98,28 @@ def parse_manifest(data: bytes) -> PackageManifest:
 		little_endian=True,
 	)
 	reader.uint()
+	version = reader.text()
 	manifest = PackageManifest(
-		FileVersion=reader.text(),
+		FileVersion=version,
 		EnableAddressable=reader.boolean(),
-		LocationToLower=reader.boolean(),
-		IncludeAssetGUID=reader.boolean(),
+		LocationToLower=reader.boolean()
+		if Version(version) > Version('1.4.16')
+		else False,
+		IncludeAssetGUID=reader.boolean()
+		if Version(version) > Version('1.4.16')
+		else False,
 		OutputNameType=OutputNameType(reader.int()),
 		PackageName=reader.text(),
 		PackageVersion=reader.text(),
 		PackageAssetCount=(count := reader.int()),
 		PackageAssetInfos=[
 			PackageAssetInfo(
+				Address=reader.text(),
 				AssetPath=reader.text(),
+				AssetGUID=reader.text()
+				if Version(version) > Version('1.4.16')
+				else None,
+				AssetTags=[reader.text() for _ in range(reader.ushort())],
 				BundleID=reader.int(),
 				DependIDs=[reader.int() for _ in range(reader.ushort())],
 			)
@@ -91,12 +129,13 @@ def parse_manifest(data: bytes) -> PackageManifest:
 		BundleList=[
 			PackageBundleInfo(
 				BundleName=reader.text(),
-				UnityCRC=reader.uint(),
+				UnityCRC=reader.uint() if Version(version) > Version('1.5.1') else None,
 				FileHash=reader.text(),
 				FileCRC=reader.text(),
 				FileSize=reader.long(),
 				IsRawFile=reader.boolean(),
 				LoadMethod=reader.byte(),
+				Tags=[reader.text() for _ in range(reader.ushort())],
 				ReferenceIDs=[reader.int() for _ in range(reader.ushort())],
 			)
 			for _ in range(count)
@@ -112,11 +151,13 @@ class YooVersionManager(AbstractVersionManager):
 		*,
 		remote_path: str,
 		local_path: Path,
+		version_factory: type[VersionProtocol | float] = Version,
 	) -> None:
 		super().__init__()
 		self.package_name = package_name
 		self.remote_path = remote_path
 		self.local_path = local_path
+		self.version_factory = version_factory
 
 		self.manifest_fp = join_path(
 			self.local_path, f'PackageManifest_{self.package_name}.json'
@@ -170,8 +211,10 @@ class YooVersionManager(AbstractVersionManager):
 	@property
 	def is_version_outdated(self) -> bool:
 		"""如果本地版本不存在或需要更新，返回True，反之返回False"""
-		return self.is_local_version_exists and (
-			Version(self.load_local_version()) < Version(self.get_remote_version())
+		local_version = self.load_local_version() or '0'
+		remote_version = self.get_remote_version() or '0'
+		return not self.is_local_version_exists or (
+			self.version_factory(local_version) < self.version_factory(remote_version)
 		)
 
 	@property

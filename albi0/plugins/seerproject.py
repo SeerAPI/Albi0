@@ -16,8 +16,10 @@ from albi0.extract.registry import (
 )
 from albi0.typing import ObjectPath
 from albi0.update import Downloader, Updater
+from albi0.update.version import LocalFileName, Manifest, ManifestItem
 from albi0.updaters import YooVersionManager
-from albi0.utils import remove_all_suffixes
+from albi0.updaters.yoo_version_manager import PackageManifest
+from albi0.utils import join_path, join_url, remove_all_suffixes
 
 if TYPE_CHECKING:
 	from UnityPy.classes import TextAsset, Texture2D
@@ -35,6 +37,22 @@ def default_decryption_method(data: memoryview):
 		return data[32:]
 
 	return data
+
+
+class SeerProjectVersionManager(YooVersionManager):
+	def _simplify_manifest(self, data: PackageManifest) -> Manifest:
+		version = data['PackageVersion']
+		items = {}
+		for item in data['BundleList']:
+			local_basename = item['BundleName']
+			remote_filehash = item['FileHash']
+			local_fn = LocalFileName(join_path(self.local_path, local_basename))
+			items[local_fn] = ManifestItem(
+				f'{join_url(self.remote_path, remote_filehash)}.bundle',
+				f'{local_basename}.bundle',
+				remote_filehash.encode(),
+			)
+		return Manifest(version=version, items=items)
 
 
 obj_pre = ObjPreHandlerGroup()
@@ -109,7 +127,7 @@ def texture2d_prehandler(
 Updater(
 	'seerproject.ab',
 	'赛尔计划AB包下载器',
-	version_manager=YooVersionManager(
+	version_manager=SeerProjectVersionManager(
 		'SpPackage',
 		remote_path='https://sp.61.com/source/taomee/Android/',
 		local_path=Path('./seerproject/assetbundles'),
