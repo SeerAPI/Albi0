@@ -141,5 +141,6 @@ def test_generate_update_manifest_empty_remote_items(mocker):
 
 def test_serialize_manifest_to_json():
 	remote_manifest = make_manifest('2', {Path('x.bin'): ('x.r', 'x.bin', b'hX')})
-	remote_manifest.to_json()
-	remote_manifest.to_dict()
+	remote_manifest_json = remote_manifest.to_json()
+	remote_manifest_from_json = Manifest.from_json(remote_manifest_json)
+	assert remote_manifest == remote_manifest_from_json
