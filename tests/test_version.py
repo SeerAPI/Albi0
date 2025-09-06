@@ -42,6 +42,10 @@ class DummyVersionManager(AbstractVersionManager):
 	def is_version_outdated(self) -> bool:
 		return self._is_outdated
 
+	@property
+	def is_local_version_exists(self) -> bool:
+		return self._local_version != ''
+
 	def save_remote_manifest(self) -> None:
 		raise NotImplementedError
 
