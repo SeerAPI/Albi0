@@ -2,7 +2,7 @@
 
 # Albi0
 ~~[摸鱼的图书馆管理员](https://wiki.biligame.com/seerplan/%E9%98%BF%E5%B0%94%E6%AF%94%E9%9B%B6)~~<br>
-✨插件化的 Unity 游戏资源更新与提取工具🌙
+🟨插件化的 Unity 游戏资源更新与提取工具🟩
 
 </div>
 
@@ -11,7 +11,12 @@
 - 插件化：通过插件系统以支持多个游戏客户端，并提供了抽象的manifest版本管理器接口，便于支持热更逻辑
 - 异步下载：基于 `httpx`、`anyio` 与 `tqdm` 的高速并发下载与实时进度显示
 
-## 使用方式（普通用户）
+## 已支持的游戏
+
+- [赛尔计划](https://www.biligame.com/detail/?id=107861)
+- [赛尔号Unity端](https://seer.61.com/)
+
+## 使用方式
 
 推荐使用 `uvx` 直接运行，无需本地安装依赖，但需要先安装 `uv`，[uv 安装文档](https://docs.astral.sh/uv/getting-started/installation/)
 
@@ -33,10 +38,16 @@ uvx albi0 list
 
 ```bash
 # 可选：切换工作目录（默认当前目录）
-uvx albi0 update newseer.default -w ./newseer
+uvx albi0 update -n newseer.default -w ./newseer
 ```
 
-3) 提取资源（AB 文件 → 本地目录）：
+3) 仅查看远程版本号（不下载资源）：
+
+```bash
+uvx albi0 update -n newseer.default --version-only
+```
+
+4) 提取资源（AB 文件 → 本地目录）：
 ```bash
 # 使用指定提取器提取（按组名/名称）
 uvx albi0 extract -n newseer "./path/to/*.ab" -o ./output
@@ -57,7 +68,7 @@ uvx albi0 extract -e "./raw/*.ab" -o ./raw_out
 ```bash
 uvx albi0 --help
 uvx albi0 list
-uvx albi0 update <updater_name> [-w WORKING_DIR]
+uvx albi0 update -n <updater_name> [-w WORKING_DIR] [--version-only] [PATTERNS...]
 uvx albi0 extract [OPTIONS] [PATTERNS...]
 ```
 
@@ -67,11 +78,16 @@ uvx albi0 extract [OPTIONS] [PATTERNS...]
 
 ### update
 
-- 必选参数：`updater_name`（可用名称见 `list` 输出）
-- 可选参数：`-w, --working-dir` 切换执行时的工作目录
+- 必选参数：`-n, --updater-name` 指定更新器名称或组名（可用名称见 `list` 输出）
+- 可选参数：
+  - `-w, --working-dir` 切换执行时的工作目录
+  - `--version-only` 仅获取远程版本号，不下载资源文件
+- 位置参数：`PATTERNS...` 可选的文件名过滤模式（glob语法），用于仅更新匹配的清单项
 - 行为：
   - 对比远程与本地资源清单，若需要更新则并发下载资源文件并保存清单
   - 进度条展示每个文件的下载进度与总体任务进度
+  - 当传入 `--version-only` 时，仅打印远程版本号并退出，不进行下载
+  - 当提供 `PATTERNS...` 时，仅会下载文件名匹配 `PATTERNS...` 的条目
 
 ### extract
 
@@ -98,13 +114,16 @@ uvx albi0 extract [OPTIONS] [PATTERNS...]
 uvx albi0 list
 
 # 2. 下载（或更新）远程资源
-uvx albi0 update newseer.default -w ./workspace
+uvx albi0 update -n newseer.default -w ./workspace
+
+# 仅下载匹配的资源（使用 glob 过滤）
+uvx albi0 update -n newseer.default "*.builtin" "Shader/*"
 
 # 3. 提取资源到本地
 uvx albi0 extract -n newseer "./workspace/newseer/assetbundles/**/*.ab" -m -o ./exports
 ```
 
-## 开发流程（贡献者）
+## 开发流程
 
 项目使用 `uv` 进行依赖管理与构建：
 
@@ -117,6 +136,9 @@ uv sync
 
 # 本地运行 CLI
 uv run albi0 --help
+
+# 运行测试
+uv run --group test pytest
 
 # 构建发行包
 uv build
