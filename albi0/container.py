@@ -15,14 +15,14 @@ class ProcessorContainer(dict[str, T_Processor]):
 	提供了使用'.'简易分组功能，
 	例如::
 
-	    from albi0.container import ProcessorContainer
+		from albi0.container import ProcessorContainer
 
-	    container = ProcessorContainer()
-	    foo = FooUpdater()
-	    bar = BarUpdater()
-	    container['newseer.Foo'] = foo
-	    container['newseer.Bar'] = bar
-	    assert container.get_by_group('newseer') == {foo, bar}
+		container = ProcessorContainer()
+		foo = FooUpdater()
+		bar = BarUpdater()
+		container['newseer.Foo'] = foo
+		container['newseer.Bar'] = bar
+		assert container.get_by_group('newseer') == {foo, bar}
 	"""
 
 	def get_by_group(self, group_name: str) -> set[T_Processor]:

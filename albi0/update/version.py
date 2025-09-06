@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import NamedTuple, NewType
+from typing_extensions import Self
 
-from dataclasses_json import DataClassJsonMixin
+from dataclasses_json import DataClassJsonMixin, config
 import dataclasses_json.cfg
 
 LocalFileName = NewType('LocalFileName', Path)
@@ -25,10 +26,60 @@ class ManifestItem(NamedTuple):
 	file_hash: bytes
 
 
+def encode_manifest_items(items: dict[LocalFileName, ManifestItem]) -> dict:
+	return {
+		str(local_fn): {
+			'remote_filename': item.remote_filename,
+			'local_basename': item.local_basename,
+			'file_hash': item.file_hash.hex(),
+		}
+		for local_fn, item in items.items()
+	}
+
+
+def decode_manifest_items(items: dict) -> dict[LocalFileName, ManifestItem]:
+	return {
+		LocalFileName(Path(local_fn)): ManifestItem(
+			item['remote_filename'],
+			item['local_basename'],
+			bytes.fromhex(item['file_hash']),
+		)
+		for local_fn, item in items.items()
+	}
+
+
 @dataclass
 class Manifest(DataClassJsonMixin):
 	version: str
-	items: dict[LocalFileName, ManifestItem]
+	items: dict[LocalFileName, ManifestItem] = field(
+		metadata=config(
+			encoder=encode_manifest_items,
+			decoder=decode_manifest_items,
+		)
+	)
+
+	def filter_local_filenames_by_glob(self, *patterns: str) -> Self:
+		"""使用glob模式从本地文件名中筛选
+
+		Args:
+			*patterns: 一个或多个glob模式字符串，如 "*.txt", "data/**/*.json"
+
+		Returns:
+			包含匹配文件的新Manifest实例，返回所有模式的并集，如果patterns为空，则原样返回
+		"""
+		from fnmatch import fnmatch
+
+		if not patterns:
+			return self
+
+		filtered_items = {}
+		for local_fn, item in self.items.items():
+			for pattern in patterns:
+				if fnmatch(item.local_basename, pattern):
+					filtered_items[local_fn] = item
+					break
+
+		return self.__class__(version=self.version, items=filtered_items)
 
 
 dataclasses_json.cfg.global_config.decoders[ManifestItem] = lambda values: ManifestItem(
@@ -59,20 +110,25 @@ class AbstractVersionManager(ABC):
 		"""如果本地版本不存在或需要更新，返回True，反之返回False"""
 		pass
 
-	def generate_update_manifest(self) -> dict[LocalFileName, ManifestItem]:
+	@property
+	@abstractmethod
+	def is_local_version_exists(self) -> bool:
+		"""本地版本是否存在"""
+		pass
+
+	def generate_update_manifest(
+		self, *patterns: str
+	) -> dict[LocalFileName, ManifestItem]:
 		"""比对本地与远程清单，返回需要更新的资源。"""
 		if not self.is_version_outdated:
 			return {}
 
-		remote_items = self.get_remote_manifest().items
-		local_items = self.load_local_manifest().items
-		# 原代码：使用循环和字典构建需要更新的文件列表
-		# result = {}
-		# for local_fn, remote_manifest_item in remote_items.items():
-		#     with suppress(KeyError):
-		#         if local_items[local_fn].file_hash == remote_manifest_item.file_hash:
-		#             continue
-		#     result[local_fn] = remote_manifest_item
+		remote_items = (
+			self.get_remote_manifest().filter_local_filenames_by_glob(*patterns).items
+		)
+		local_items = (
+			self.load_local_manifest().filter_local_filenames_by_glob(*patterns).items
+		)
 
 		def needs_update(item: tuple[LocalFileName, ManifestItem]) -> bool:
 			local_fn, remote_manifest_item = item

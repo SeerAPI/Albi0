@@ -132,7 +132,7 @@ class YooVersionManager(AbstractVersionManager):
 			remote_filehash = item['FileHash']
 			local_fn = LocalFileName(join_path(self.local_path, local_basename))
 			items[local_fn] = ManifestItem(
-				join_url(self.remote_path, remote_filehash + '.bundle'),
+				join_url(self.remote_path, remote_filehash),
 				f'{local_basename}.bundle',
 				remote_filehash.encode(),
 			)
@@ -158,7 +158,7 @@ class YooVersionManager(AbstractVersionManager):
 		return self._simplify_manifest(manifest_dict)
 
 	def load_local_manifest(self) -> Manifest:
-		if not self.manifest_fp.is_file():
+		if not self.is_local_version_exists:
 			return _create_empty_manifest()
 
 		return Manifest.from_json(self.manifest_fp.read_bytes())
@@ -170,8 +170,11 @@ class YooVersionManager(AbstractVersionManager):
 	@property
 	def is_version_outdated(self) -> bool:
 		"""如果本地版本不存在或需要更新，返回True，反之返回False"""
-		local_mf = self.load_local_version()
-		if local_mf == '':
-			return True
+		return self.is_local_version_exists and (
+			Version(self.load_local_version()) < Version(self.get_remote_version())
+		)
 
-		return Version(local_mf) >= Version(self.get_remote_version())
+	@property
+	def is_local_version_exists(self) -> bool:
+		"""检查本地版本是否存在"""
+		return self.manifest_fp.is_file()
