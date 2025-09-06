@@ -20,6 +20,12 @@ from albi0.utils import set_directory
 	type=str,
 	help='更新器名称，支持传入更新器/组名',
 )
+@click.option(
+	'--version-only',
+	is_flag=True,
+	default=False,
+	help='仅获取远程版本号，不下载资源文件',
+)
 @click.argument('patterns', nargs=-1, default=None)
 @click.pass_context
 @syncify
@@ -28,6 +34,7 @@ async def update(
 	patterns: list[str] | None,
 	working_dir: str | None,
 	updater_name: str,
+	version_only: bool,
 ):
 	patterns = patterns or []
 	os.chdir(working_dir or './')
@@ -44,6 +51,9 @@ async def update(
 
 	for updater in updater_set:
 		click.echo(f'运行更新器：{updater.name}')
+		if version_only:
+			click.echo(f'远程版本：{updater.version_manager.get_remote_version()}\n')
+			continue
 		if not updater.version_manager.is_version_outdated:
 			click.echo('本地资源清单已经是最新版本了，跳过！ ')
 			continue
