@@ -91,42 +91,72 @@ def _create_empty_manifest() -> Manifest:
 	return Manifest(version='', items={})
 
 
-def parse_manifest(data: bytes) -> PackageManifest:
-	reader = BytesReader(
-		data,
-		length_type=LengthType.UINT16,
-		little_endian=True,
-	)
-	reader.uint()
-	version = reader.text()
-	manifest = PackageManifest(
-		FileVersion=version,
-		EnableAddressable=reader.boolean(),
-		LocationToLower=reader.boolean()
-		if Version(version) > Version('1.4.16')
-		else False,
-		IncludeAssetGUID=reader.boolean()
-		if Version(version) > Version('1.4.16')
-		else False,
-		OutputNameType=OutputNameType(reader.int()),
-		PackageName=reader.text(),
-		PackageVersion=reader.text(),
-		PackageAssetCount=(count := reader.int()),
-		PackageAssetInfos=[
+class YooManifestParser:
+	"""清单解析器"""
+
+	def __call__(self, data: bytes) -> PackageManifest:
+		return self.parse_manifest(data)
+
+	def parse_manifest(self, data: bytes) -> PackageManifest:
+		"""解析清单数据"""
+		reader = BytesReader(
+			data,
+			length_type=LengthType.UINT16,
+			little_endian=True,
+		)
+		reader.uint()
+		version = reader.text()
+		manifest = PackageManifest(
+			FileVersion=version,
+			EnableAddressable=reader.boolean(),
+			LocationToLower=reader.boolean()
+			if Version(version) > Version('1.4.16')
+			else False,
+			IncludeAssetGUID=reader.boolean()
+			if Version(version) > Version('1.4.16')
+			else False,
+			OutputNameType=OutputNameType(reader.int()),
+			PackageName=reader.text(),
+			PackageVersion=reader.text(),
+			PackageAssetCount=0,
+			PackageAssetInfos=[],
+			PackageBundleCount=0,
+			BundleList=[],
+		)
+		count = reader.int()
+		manifest['PackageAssetCount'] = count
+		package_asset_infos = self._parse_asset_infos(reader, version, count)
+		manifest['PackageAssetInfos'] = package_asset_infos
+
+		count = reader.int()
+		manifest['PackageBundleCount'] = count
+		bundle_list = self._parse_bundle_list(reader, version, count)
+		manifest['BundleList'] = bundle_list
+		return manifest
+
+	def _parse_asset_infos(
+		self, reader: BytesReader, version: str, count: int
+	) -> list[PackageAssetInfo]:
+		"""解析资源信息列表"""
+		return [
 			PackageAssetInfo(
 				Address=reader.text(),
 				AssetPath=reader.text(),
 				AssetGUID=reader.text()
 				if Version(version) > Version('1.4.16')
 				else None,
-				AssetTags=[reader.text() for _ in range(reader.ushort())],
+				AssetTags=reader.text_list(),
 				BundleID=reader.int(),
-				DependIDs=[reader.int() for _ in range(reader.ushort())],
+				DependIDs=reader.int_list(),
 			)
 			for _ in range(count)
-		],
-		PackageBundleCount=(count := reader.int()),
-		BundleList=[
+		]
+
+	def _parse_bundle_list(
+		self, reader: BytesReader, version: str, count: int
+	) -> list[PackageBundleInfo]:
+		"""解析Bundle列表"""
+		return [
 			PackageBundleInfo(
 				BundleName=reader.text(),
 				UnityCRC=reader.uint() if Version(version) > Version('1.5.1') else None,
@@ -135,13 +165,11 @@ def parse_manifest(data: bytes) -> PackageManifest:
 				FileSize=reader.long(),
 				IsRawFile=reader.boolean(),
 				LoadMethod=reader.byte(),
-				Tags=[reader.text() for _ in range(reader.ushort())],
-				ReferenceIDs=[reader.int() for _ in range(reader.ushort())],
+				Tags=reader.text_list(),
+				ReferenceIDs=reader.int_list(),
 			)
 			for _ in range(count)
-		],
-	)
-	return manifest
+		]
 
 
 class YooVersionManager(AbstractVersionManager):
@@ -151,12 +179,14 @@ class YooVersionManager(AbstractVersionManager):
 		*,
 		remote_path: str,
 		local_path: Path,
+		manifest_factory: Callable[[bytes], PackageManifest] = YooManifestParser(),
 		version_factory: type[VersionProtocol | float] = Version,
 	) -> None:
 		super().__init__()
 		self.package_name = package_name
 		self.remote_path = remote_path
 		self.local_path = local_path
+		self.manifest_factory = manifest_factory
 		self.version_factory = version_factory
 
 		self.manifest_fp = join_path(
@@ -195,7 +225,7 @@ class YooVersionManager(AbstractVersionManager):
 			f'PackageManifest_{self.package_name}_{self.get_remote_version()}.bytes',
 		)
 		req = httpx.get(remote_manifest_url)
-		manifest_dict = parse_manifest(req.content)
+		manifest_dict = self.manifest_factory(req.content)
 		return self._simplify_manifest(manifest_dict)
 
 	def load_local_manifest(self) -> Manifest:

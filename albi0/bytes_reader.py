@@ -102,9 +102,10 @@ class BytesReader:
 		初始化字节读取器
 
 		Args:
-		    data: 字节数据
-		    options: 选项字典，包含lengthType和littleEndian
-		    tag: 标签，用于调试输出
+			data: 要读取的字节数据
+			length_type: 字符串长度前缀类型，默认使用全局设置
+			little_endian: 是否使用小端字节序，默认为True
+
 		"""
 		self.data = data
 		self.offset = 0
@@ -220,34 +221,15 @@ class BytesReader:
 		format_str = '<d' if little_endian else '>d'
 		return struct.unpack(format_str, data)[0]
 
-	def png(self) -> bytes:
-		"""读取PNG图像数据"""
-		start_offset = self.offset
-		signature = bytes([137, 80, 78, 71, 13, 10, 26, 10])
+	def text_list(self) -> list[str]:
+		"""读取带长度前缀的文本列表"""
+		length = self.ushort()
+		return [self.text() for _ in range(length)]
 
-		if not cmp(signature, self.read(len(signature))):
-			raise ValueError('Invalid PNG signature')
-
-		self.seek(25)  # ihdr
-
-		# IDAT chunk
-		size = self.int(False)
-		while size > 0:
-			idat_type = self.read(4).decode('ascii')
-			if idat_type != 'IDAT':
-				raise ValueError('Invalid PNG IDAT chunk')
-
-			self.seek(size + 4)  # data + crc
-			size = self.int(False)
-
-		iend = self.read(4).decode('ascii')
-		if iend != 'IEND':
-			raise ValueError('Invalid PNG IEND chunk')
-		self.seek(4)  # crc
-
-		length = self.offset - start_offset
-		self.set_offset(start_offset)
-		return self.read(length, 'png end')
+	def int_list(self) -> list['int']:
+		"""读取带长度前缀的有符号32位整数列表"""
+		length = self.ushort()
+		return [self.int() for _ in range(length)]
 
 
 # 类型定义
