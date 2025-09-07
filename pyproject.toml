@@ -4,10 +4,8 @@ build-backend = "uv_build"
 
 [project]
 name = "Albi0"
-version = "0.1.0"
-authors = [
-    {name = "Nattsu39", email = "nattsu39@outlook.com"},
-]
+version = "0.1.1"
+authors = [{ name = "Nattsu39", email = "nattsu39@outlook.com" }]
 description = "Plugin-based Unity Asset Extractor"
 keywords = ["unity", "asset", "extractor", "plugin", "game", "seer"]
 classifiers = [
@@ -20,17 +18,17 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
-    "asyncer>=0.0.8",
-    "anyio>=4.6.2.post1",
-    "tqdm>=4.67.0",
-    "httpx>=0.27.2",
-    "click>=8.1.7",
-    "orjson>=3.10.11",
-    "unitypy>=1.23",
-    "loguru>=0.7.2",
-    "aiofiles>=24.1.0",
-    "slpp>=1.2.3",
-    "dataclasses-json>=0.6.7",
+  "asyncer>=0.0.8",
+  "anyio>=4.6.2.post1",
+  "tqdm>=4.67.0",
+  "httpx>=0.27.2",
+  "click>=8.1.7",
+  "orjson>=3.10.11",
+  "unitypy>=1.23",
+  "loguru>=0.7.2",
+  "aiofiles>=24.1.0",
+  "slpp>=1.2.3",
+  "dataclasses-json>=0.6.7",
 ]
 
 [project.urls]
@@ -39,13 +37,8 @@ dependencies = [
 "Repository" = "https://github.com/SeerAPI/albi0"
 
 [dependency-groups]
-dev = [
-    "ruff>=0.8.0",
-]
-test = [
-    "pytest>=8.4.1",
-    "pytest-mock>=3.15.0",
-]
+dev = ["ruff>=0.8.0"]
+test = ["pytest>=8.4.1", "pytest-mock>=3.15.0"]
 
 [project.scripts]
 albi0 = "albi0:__main__.main"
@@ -71,7 +64,7 @@ target-version = "py310"
 quote-style = "single"
 indent-style = "tab"
 line-ending = "lf"
-docstring-code-format = true
+docstring-code-format = false
 
 [tool.ruff.lint]
 select = [
