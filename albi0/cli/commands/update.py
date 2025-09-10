@@ -49,7 +49,10 @@ async def update(
 	)
 	click.echo(_updater_string)
 
-	with timer('✅ 更新完成~ 总耗时: {duration:.2f}s'):
+	with (
+		timer('✅ 更新完成~ 总耗时: {duration:.2f}s'),
+		set_directory(working_dir or './'),
+	):
 		for updater in updater_set:
 			click.echo(f'运行更新器：{updater.name}')
 			if version_only:
@@ -63,11 +66,10 @@ async def update(
 				f'远程版本：{updater.version_manager.get_remote_version()}\n'
 				f'开始运行更新器...'
 			)
-			with set_directory(working_dir or './'):
-				await updater.update(
-					progress_bar_message='下载资源文件',
-					patterns=patterns,
-				)
+			await updater.update(
+				progress_bar_message='下载资源文件',
+				patterns=patterns,
+			)
 			click.echo(
 				f'✅(<ゝω・)～☆更新完毕！'
 				f'本地版本：{updater.version_manager.load_local_version() or "无"}\n'

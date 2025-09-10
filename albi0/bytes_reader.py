@@ -6,13 +6,6 @@ from enum import Enum
 import struct
 
 
-def cmp(a: bytes, b: bytes) -> bool:
-	"""比较两个字节数组是否相等"""
-	if len(a) != len(b):
-		return False
-	return a == b
-
-
 class Writer:
 	"""字节写入工具类"""
 
@@ -257,12 +250,12 @@ def bundle_bytes_struct(
 	将结构化数据打包成字节数组
 
 	Args:
-	    writer: 写入器
-	    schema: 数据结构模式
-	    tag: 标签，用于调试输出
+		writer: 写入器
+		schema: 数据结构模式
+		tag: 标签，用于调试输出
 
 	Returns:
-	    打包后的字节数组
+		打包后的字节数组
 	"""
 	# 过滤掉None和undefined
 	schema = [s for s in schema if s is not None]
