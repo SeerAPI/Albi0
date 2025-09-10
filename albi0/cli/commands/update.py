@@ -4,7 +4,7 @@ from asyncer import syncify
 import click
 
 from albi0.update import updaters
-from albi0.utils import set_directory
+from albi0.utils import set_directory, timer
 
 
 @click.command(help='更新资源清单并下载资源文件')
@@ -49,23 +49,26 @@ async def update(
 	)
 	click.echo(_updater_string)
 
-	for updater in updater_set:
-		click.echo(f'运行更新器：{updater.name}')
-		if version_only:
-			click.echo(f'远程版本：{updater.version_manager.get_remote_version()}\n')
-			continue
+	with timer('✅ 更新完成~ 总耗时: {duration:.2f}s'):
+		for updater in updater_set:
+			click.echo(f'运行更新器：{updater.name}')
+			if version_only:
+				click.echo(
+					f'远程版本：{updater.version_manager.get_remote_version()}\n'
+				)
+				continue
 
-		click.echo(
-			f'本地版本：{updater.version_manager.load_local_version() or "无"}\n'
-			f'远程版本：{updater.version_manager.get_remote_version()}\n'
-			f'开始运行更新器...'
-		)
-		with set_directory(working_dir or './'):
-			await updater.update(
-				progress_bar_message='下载资源文件',
-				patterns=patterns,
+			click.echo(
+				f'本地版本：{updater.version_manager.load_local_version() or "无"}\n'
+				f'远程版本：{updater.version_manager.get_remote_version()}\n'
+				f'开始运行更新器...'
 			)
-		click.echo(
-			f'(<ゝω・)～☆更新完毕！'
-			f'本地版本：{updater.version_manager.load_local_version() or "无"}\n'
-		)
+			with set_directory(working_dir or './'):
+				await updater.update(
+					progress_bar_message='下载资源文件',
+					patterns=patterns,
+				)
+			click.echo(
+				f'✅(<ゝω・)～☆更新完毕！'
+				f'本地版本：{updater.version_manager.load_local_version() or "无"}\n'
+			)

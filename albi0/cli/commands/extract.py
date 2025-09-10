@@ -7,7 +7,7 @@ import click
 
 from albi0.extract.extractor import extractors
 from albi0.log import logger
-from albi0.utils import join_path
+from albi0.utils import join_path, timer
 
 
 @click.command(context_settings={'ignore_unknown_options': True})
@@ -64,14 +64,17 @@ async def extract(
 		click.echo(f'找不到输入的提取器/组{extractor_name}')
 		return
 
-	for extractor in extractor_set:
-		click.echo(f'运行提取器：{extractor.name}')
-		try:
-			extractor.extract_asset(
-				*ab_paths,
-				export_dir=join_path(extractor_name, output_dir),
-				merge_extract=merge_extract,
-			)
-		except Exception as e:
-			logger.opt(exception=e).error(e)
-		click.echo(f'{extractor.name}提取完成~')
+	with timer('✅ 提取完成~ 总耗时: {duration:.2f}s'):
+		for extractor in extractor_set:
+			click.echo(f'运行提取器：{extractor.name}')
+			try:
+				extractor.extract_asset(
+					*ab_paths,
+					export_dir=join_path(extractor_name, output_dir),
+					merge_extract=merge_extract,
+				)
+				click.echo(f'✅ {extractor.name}提取完成~')
+			except Exception as e:
+				logger.opt(exception=e).error(e)
+				click.echo(f'❌ {extractor.name}提取失败.')
+				raise

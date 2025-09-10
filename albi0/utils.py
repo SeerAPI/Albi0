@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Iterator
+from collections.abc import Generator, Iterable, Iterator
 from contextlib import contextmanager
 import fnmatch
 import functools
@@ -7,6 +7,7 @@ import hashlib
 import itertools
 import os
 from pathlib import Path
+import time
 from typing import AnyStr
 
 from tqdm import tqdm
@@ -121,3 +122,24 @@ def join_url(base: str, *urls: str) -> str:
 		base = urljoin(base, url)
 
 	return base
+
+
+@contextmanager
+def timer(
+	message_template: str = '{name} 耗时: {duration:.2f}s', **kwargs
+) -> Generator[None, None, None]:
+	"""一个简单的计时器上下文管理器
+
+	Args:
+		message_template: 最终展示的字符串模板.
+		**kwargs: 模板中可用的额外参数.
+	"""
+	import click
+
+	start_time = time.perf_counter()
+	try:
+		yield
+	finally:
+		end_time = time.perf_counter()
+		duration = end_time - start_time
+		click.echo(message_template.format(duration=duration, **kwargs))
