@@ -88,7 +88,7 @@ class PackageManifest(TypedDict):
 
 
 def _create_empty_manifest() -> Manifest:
-	return Manifest(version='', items={})
+	return Manifest(version='0', items={})
 
 
 class YooManifestParser:
@@ -234,13 +234,12 @@ class YooVersionManager(AbstractVersionManager):
 
 		return Manifest.from_json(self.manifest_fp.read_bytes())
 
-	def save_remote_manifest(self):
-		mf = self.get_remote_manifest()
-		Path(self.manifest_fp).write_text(mf.to_json())
+	def save_manifest_to_local(self, manifest: Manifest) -> None:
+		self.manifest_fp.parent.mkdir(parents=True, exist_ok=True)
+		self.manifest_fp.write_text(manifest.to_json())
 
 	@property
 	def is_version_outdated(self) -> bool:
-		"""如果本地版本不存在或需要更新，返回True，反之返回False"""
 		local_version = self.load_local_version() or '0'
 		remote_version = self.get_remote_version() or '0'
 		return not self.is_local_version_exists or (

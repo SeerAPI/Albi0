@@ -29,6 +29,9 @@ class Updater:
 
 		updaters[self.name] = self
 
+	def _log_message(self, message: str) -> None:
+		click.echo(f'更新器|[{self.name}]: {message}')
+
 	async def update(
 		self,
 		*,
@@ -43,22 +46,34 @@ class Updater:
 		Args:
 			progress_bar_message: 进度条显示的消息文本
 			save_manifest: 是否保存清单
-			patterns: glob语法的文件名过滤模式，用于过滤希望检查更新的文件。如果为空则更新所有文件
+			patterns: glob语法的文件名过滤模式，用于过滤希望检查更新的文件，
+			如果为空则检查所有文件。
 		"""
-		if self.version_manager.is_version_outdated:
-			manifest = self.version_manager.generate_update_manifest(*patterns)
-			tasks = [
-				DownloadParams(url=item.remote_filename, filename=local_fn)
-				for local_fn, item in manifest.items()
-			]
-			if tasks:
-				await self.downloader.downloads(
-					*tasks,
-					desc=progress_bar_message,
-					postprocess_handler=self.postprocess_handler,
-				)
-			if save_manifest and (
-				tasks or not self.version_manager.is_local_version_exists
-			):
-				self.version_manager.save_remote_manifest()
-				click.echo(f'更新器：{self.name} | 资源清单更新完成')
+		manifest = self.version_manager.generate_update_manifest(*patterns)
+		if not manifest:
+			self._log_message('没有需要更新的文件，运行结束')
+			return
+
+		items = manifest.items
+		self._log_message(f'需要更新的文件数量: {len(items)}')
+		tasks = [
+			DownloadParams(url=item.remote_filename, filename=local_fn)
+			for local_fn, item in items.items()
+		]
+		if tasks:
+			await self.downloader.downloads(
+				*tasks,
+				desc=progress_bar_message,
+				postprocess_handler=self.postprocess_handler,
+			)
+
+		if not tasks:
+			self._log_message('没有需要更新的文件，不保存资源清单')
+			return
+
+		if not save_manifest:
+			self._log_message('参数save_manifest为False，不保存资源清单')
+			return
+
+		self.version_manager.save_manifest_to_local(manifest)
+		self._log_message('资源清单更新完成')

@@ -88,8 +88,10 @@ dataclasses_json.cfg.global_config.decoders[ManifestItem] = lambda values: Manif
 
 
 class AbstractVersionManager(ABC):
+	@property
 	@abstractmethod
-	def get_remote_manifest(self) -> Manifest:
+	def is_local_version_exists(self) -> bool:
+		"""本地版本是否存在"""
 		pass
 
 	@abstractmethod
@@ -97,38 +99,48 @@ class AbstractVersionManager(ABC):
 		pass
 
 	@abstractmethod
-	def get_remote_version(self) -> str:
+	def save_manifest_to_local(self, manifest: Manifest) -> None:
 		pass
 
 	@abstractmethod
 	def load_local_version(self) -> str:
 		pass
 
+	@abstractmethod
+	def get_remote_manifest(self) -> Manifest:
+		pass
+
+	@abstractmethod
+	def get_remote_version(self) -> str:
+		pass
+
 	@property
 	@abstractmethod
 	def is_version_outdated(self) -> bool:
-		"""如果本地版本不存在或需要更新，返回True，反之返回False"""
-		pass
+		"""
+		如果本地版本不存在或版本号小于远程版本号，返回True，反之返回False，
+		注意该方法仅判断版本号，不能用于判断是否需要下载资源。
+		"""
 
-	@property
-	@abstractmethod
-	def is_local_version_exists(self) -> bool:
-		"""本地版本是否存在"""
-		pass
+	def generate_update_manifest(self, *patterns: str) -> Manifest | None:
+		"""
+		比对本地与远程清单，返回需要更新的资源。
 
-	def generate_update_manifest(
-		self, *patterns: str
-	) -> dict[LocalFileName, ManifestItem]:
-		"""比对本地与远程清单，返回需要更新的资源。"""
-		if not self.is_version_outdated:
-			return {}
+		Args:
+			*patterns: 一个或多个glob模式字符串，如 "*.txt", "data/**/*.json"
 
-		remote_items = (
-			self.get_remote_manifest().filter_local_filenames_by_glob(*patterns).items
-		)
-		local_items = (
-			self.load_local_manifest().filter_local_filenames_by_glob(*patterns).items
-		)
+		Returns:
+			包含匹配资源的清单，返回所有模式的并集，patterns为空则原样返回，
+			如果没有需要更新的资源，返回None。
+		"""
+		remote_manifest = self.get_remote_manifest()
+		local_manifest = self.load_local_manifest()
+		remote_version = remote_manifest.version
+		remote_items = remote_manifest.filter_local_filenames_by_glob(*patterns).items
+		local_items = local_manifest.filter_local_filenames_by_glob(*patterns).items
+
+		if local_items == remote_items or not remote_items:
+			return None
 
 		def needs_update(item: tuple[LocalFileName, ManifestItem]) -> bool:
 			local_fn, remote_manifest_item = item
@@ -137,9 +149,13 @@ class AbstractVersionManager(ABC):
 			except KeyError:
 				return True
 
-		return dict(filter(needs_update, remote_items.items()))
+		items = filter(needs_update, remote_items.items())
+		if not items:
+			return None
 
-	@abstractmethod
-	def save_remote_manifest(self):
+		return Manifest(version=remote_version, items=dict(items))
+
+	def save_remote_manifest(self) -> None:
 		"""保存远程资源清单到本地"""
-		pass
+		manifest = self.get_remote_manifest()
+		self.save_manifest_to_local(manifest)

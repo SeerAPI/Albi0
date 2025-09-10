@@ -85,7 +85,7 @@ class Downloader:
 		*params: DownloadParams,
 		desc: str | None = None,
 		postprocess_handler: DownloadPostProcessMethod | None = None,
-	):
+	) -> None:
 		with tqdm(total=len(params), desc=desc) as progress_bar:
 
 			async def _handle(p: DownloadParams):

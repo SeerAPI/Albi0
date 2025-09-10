@@ -35,7 +35,7 @@ async def update(
 	working_dir: str | None,
 	updater_name: str,
 	version_only: bool,
-):
+) -> None:
 	patterns = patterns or []
 	os.chdir(working_dir or './')
 	updater_set = updaters.get_processors(updater_name)
@@ -54,14 +54,11 @@ async def update(
 		if version_only:
 			click.echo(f'远程版本：{updater.version_manager.get_remote_version()}\n')
 			continue
-		if not updater.version_manager.is_version_outdated:
-			click.echo('本地资源清单已经是最新版本了，跳过！ ')
-			continue
 
 		click.echo(
 			f'本地版本：{updater.version_manager.load_local_version() or "无"}\n'
 			f'远程版本：{updater.version_manager.get_remote_version()}\n'
-			f'开始更新...'
+			f'开始运行更新器...'
 		)
 		with set_directory(working_dir or './'):
 			await updater.update(
@@ -69,5 +66,6 @@ async def update(
 				patterns=patterns,
 			)
 		click.echo(
-			f'(<ゝω・)～☆资源下载完毕！本地版本：{updater.version_manager.load_local_version()}'
+			f'(<ゝω・)～☆更新完毕！'
+			f'本地版本：{updater.version_manager.load_local_version() or "无"}\n'
 		)
