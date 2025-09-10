@@ -37,6 +37,14 @@ from albi0.utils import join_path, timer
 	is_flag=True,
 	show_default=True,
 )
+@click.option(
+	'-t',
+	'--parallel-threads',
+	'--max-workers',
+	default=4,
+	type=int,
+	show_default=True,
+)
 @click.argument('patterns', nargs=-1, default=None)
 @click.pass_context
 @syncify
@@ -47,6 +55,7 @@ async def extract(
 	extractor_name: str,
 	export_as_is: bool,
 	merge_extract: bool,
+	parallel_threads: int,
 ):
 	output_dir = output_dir or '.'
 	patterns = patterns or []
@@ -72,6 +81,7 @@ async def extract(
 					*ab_paths,
 					export_dir=join_path(extractor_name, output_dir),
 					merge_extract=merge_extract,
+					max_workers=parallel_threads,
 				)
 				click.echo(f'✅ {extractor.name}提取完成~')
 			except Exception as e:

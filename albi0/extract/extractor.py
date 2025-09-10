@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Optional, TypeVar, cast
@@ -53,7 +54,7 @@ class Extractor:
 		asset_posthandler_group: Optional['AssetPostHandlerGroup'] = None,
 		obj_prehandler_group: Optional['ObjPreHandlerGroup'] = None,
 		export_handler_group: Optional['ExportHandlerGroup'] = None,
-	):
+	) -> None:
 		self.name = name
 		self.desc = desc
 
@@ -71,11 +72,12 @@ class Extractor:
 		extractors[name] = self
 
 	def from_file_load(self, *filenames: PathTypes) -> Environment:
-		from tqdm import tqdm
-
 		env = Environment()
 		for filename in tqdm(
-			filenames, desc='加载文件中...', disable=len(filenames) == 1
+			filenames,
+			desc='加载文件到内存...',
+			disable=len(filenames) == 1,
+			unit='file',
 		):
 			if split_match := reSplit.match(str(filename)):
 				name = split_match.groups()[0]
@@ -93,6 +95,7 @@ class Extractor:
 		self,
 		*sources: PathTypes,
 		export_dir: PathTypes,
+		max_workers: int = 4,
 		merge_extract: bool = False,
 		export_unknown_as_typetree: bool = True,
 	) -> None:
@@ -116,7 +119,7 @@ class Extractor:
 				environment.container.items(),
 				key=lambda x: defaulted_export_index(x[1]),  # type: ignore
 			)
-			for obj_path, obj in tqdm(container, desc='提取中...', leave=False):
+			for obj_path, obj in container:
 				try:
 					obj = cast('PPtr', obj)
 					obj = obj.deref()
@@ -124,7 +127,6 @@ class Extractor:
 						obj, export_dir=export_dir
 					)
 					_result.append((obj, ObjectPath(PurePath(obj_path))))
-					# export_obj(obj, ObjectPath(PurePath(obj_path)))
 				except StopExtractThisObject:
 					continue
 				except Exception as e:
@@ -154,21 +156,51 @@ class Extractor:
 				export_unknown_as_typetree=export_unknown_as_typetree,
 			)
 
-		def export_wrap(env: Environment):
-			for obj, obj_path in handle_asset(env):
+		with (
+			ThreadPoolExecutor(max_workers=max_workers) as executor,
+			tqdm(
+				desc='提取中...',
+				total=None,
+				disable=not merge_extract,
+				unit='object',
+			) as pbar,
+		):
+
+			def export_single_obj(
+				obj_and_path: tuple['ObjectReader', ObjectPath],
+			) -> None:
+				obj, obj_path = obj_and_path
 				try:
 					export_obj(obj, obj_path)
 				except Exception as e:
 					logger.opt(exception=e).error(f'{obj_path} | {e}')
-					continue
 
-		if merge_extract:
-			env = self.from_file_load(*sources)
-			export_wrap(env)
-		else:
-			for source_fn in tqdm(sources, desc='提取中...', disable=merge_extract):
-				env = self.from_file_load(source_fn)
+			def export_wrap(env: Environment) -> None:
+				objs = handle_asset(env)
+				if not pbar.disable and pbar.total is None:
+					pbar.total = len(objs)
+
+				# 使用多进程处理每个对象的导出
+				futures = [
+					executor.submit(export_single_obj, obj_and_path)
+					for obj_and_path in objs
+				]
+				for future in futures:
+					future.add_done_callback(
+						lambda _: pbar.update(1) if not pbar.disable else None
+					)
+					future.result()
+
+			if merge_extract:
+				env = self.from_file_load(*sources)
 				export_wrap(env)
+				return
+
+			with tqdm(sources, unit='file') as not_merge_pbar:
+				for source_fn in not_merge_pbar:
+					not_merge_pbar.set_description(f'提取文件: {Path(source_fn).name}')
+					env = self.from_file_load(source_fn)
+					export_wrap(env)
 
 
 Extractor('default', '默认提取器，直接提取不做任何处理')
