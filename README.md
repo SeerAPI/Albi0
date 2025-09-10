@@ -68,8 +68,8 @@ uvx albi0 extract -e "./raw/*.ab" -o ./raw_out
 ```bash
 uvx albi0 --help
 uvx albi0 list
-uvx albi0 update -n <updater_name> [-w WORKING_DIR] [--version-only] [PATTERNS...]
-uvx albi0 extract [OPTIONS] [PATTERNS...]
+uvx albi0 update -n <updater_name> [-w WORKING_DIR] [-s LIMIT] [--version-only] [PATTERNS...]
+uvx albi0 extract [OPTIONS] [-t THREADS] [PATTERNS...]
 ```
 
 ### list
@@ -81,6 +81,7 @@ uvx albi0 extract [OPTIONS] [PATTERNS...]
 - 必选参数：`-n, --updater-name` 指定更新器名称或组名（可用名称见 `list` 输出）
 - 可选参数：
   - `-w, --working-dir` 切换执行时的工作目录
+  - `-s, --semaphore-limit` 最大并发下载数（默认10）
   - `--version-only` 仅获取远程版本号，不下载资源文件
 - 位置参数：`PATTERNS...` 可选的文件名过滤模式（glob语法），用于仅更新匹配的清单项
 - 行为：
@@ -96,6 +97,7 @@ uvx albi0 extract [OPTIONS] [PATTERNS...]
   - `-n, --extractor-name` 提取器名称或组名（默认 `default`）
   - `-e, --export-as-is` 原样导出（强制使用默认提取器）
   - `-m, --merge-extract` 合并模式（先合并环境再导出）
+  - `-t, --parallel-threads` 并行处理使用的线程数，可根据 CPU 核心数调整（默认4）
 - 位置参数：`PATTERNS...` 资源文件的 glob 模式（如 `"./**/*.ab"`）
 - 行为：
   - 依次加载匹配到的资源文件，调用插件注册的处理器进行导出
@@ -119,8 +121,14 @@ uvx albi0 update -n newseer.default -w ./workspace
 # 仅下载匹配的资源（使用 glob 过滤）
 uvx albi0 update -n newseer.default "*.builtin" "Shader/*"
 
+# 调整并发数下载
+uvx albi0 update -n newseer.default -s 20
+
 # 3. 提取资源到本地
 uvx albi0 extract -n newseer "./workspace/newseer/assetbundles/**/*.ab" -m -o ./exports
+
+# 使用多线程加速提取
+uvx albi0 extract -n newseer "./workspace/newseer/assetbundles/**/*.ab" -m -o ./exports -t 8
 ```
 
 ## 开发流程
@@ -149,7 +157,7 @@ uv build
 - Q: 为什么没有看到我新写的插件生效？
   - A: 确保插件模块在 `albi0/plugins/__init__.py` 被导入；CLI 入口会导入 `albi0.plugins` 完成注册。
 - Q: 下载很慢/失败？
-  - A: 默认 `httpx` 客户端带有 UA/Referer 头，且支持并发；可根据网络情况调整并发或使用代理（自行扩展 `Downloader`）。
+  - A: 默认并发数是10，对于某些网络环境或服务器限制可能不是最优。可以尝试使用 `-s` 或 `--semaphore-limit` 选项减少并发数，例如 `-s 5`。如果问题仍然存在，可能需要检查网络或考虑使用代理
 - Q: 导出结果的格式不符合预期？
   - A: 检查对应插件的对象前处理器与资源后处理器逻辑，或使用 `-e/--export-as-is` 原样导出。
 
