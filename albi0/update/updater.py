@@ -1,6 +1,8 @@
 from collections.abc import Iterable
 
+import anyio
 import click
+from tqdm.asyncio import tqdm
 
 from albi0.container import ProcessorContainer
 from albi0.typing import DownloadPostProcessMethod
@@ -35,16 +37,18 @@ class Updater:
 	async def update(
 		self,
 		*,
-		progress_bar_message: str,
+		progress_bar: tqdm | None = None,
 		save_manifest: bool = True,
 		patterns: Iterable[str] = (),
+		semaphore: anyio.Semaphore | None = None,
 	) -> None:
 		"""异步更新资源文件
 
 		检查版本是否过期，如果需要更新则下载新的资源文件并保存清单，过滤后没有需要更新的文件时不会保存清单。
 
 		Args:
-			progress_bar_message: 进度条显示的消息文本
+			progress_bar: 进度条
+			semaphore: 并发限制
 			save_manifest: 是否保存清单
 			patterns: glob语法的文件名过滤模式，用于过滤希望检查更新的文件，
 			如果为空则检查所有文件。
@@ -63,8 +67,9 @@ class Updater:
 		if tasks:
 			await self.downloader.downloads(
 				*tasks,
-				desc=progress_bar_message,
+				progress_bar=progress_bar,
 				postprocess_handler=self.postprocess_handler,
+				semaphore=semaphore,
 			)
 
 		if not tasks:

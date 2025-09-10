@@ -1,4 +1,3 @@
-from asyncio import Semaphore
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Literal, NamedTuple
 
@@ -28,7 +27,7 @@ class Downloader:
 
 	def __init__(self, client: 'AsyncClient | None' = None, limit: int = 10):
 		self._client = client or self._global_client
-		self._semaphore = Semaphore(limit)
+		self._semaphore = anyio.Semaphore(limit)
 
 	async def _get_data(
 		self,
@@ -70,8 +69,9 @@ class Downloader:
 		method: Literal['GET', 'POST'] = 'GET',
 		md5: str | None = None,
 		postprocess_handler: DownloadPostProcessMethod | None = None,
+		semaphore: anyio.Semaphore | None = None,
 	):
-		async with self._semaphore:
+		async with semaphore or self._semaphore:
 			data = await self._get_data(url, method=method, md5=md5)
 			if postprocess_handler is not None:
 				data = postprocess_handler(data)
@@ -83,10 +83,20 @@ class Downloader:
 	async def downloads(
 		self,
 		*params: DownloadParams,
-		desc: str | None = None,
+		semaphore: anyio.Semaphore | None = None,
+		progress_bar: tqdm | None = None,
 		postprocess_handler: DownloadPostProcessMethod | None = None,
 	) -> None:
-		with tqdm(total=len(params), desc=desc) as progress_bar:
+		total = len(params)
+		# 这里不能使用 or 表达式，因为 tqdm 的 total 属性还没有设置，
+		# 此时调用 __bool__ 会报错
+		pbar = (
+			tqdm(total=total, desc='下载中', unit='file')
+			if progress_bar is None
+			else progress_bar
+		)
+		pbar.total = total
+		with pbar:
 
 			async def _handle(p: DownloadParams):
 				await self.download(
@@ -95,8 +105,9 @@ class Downloader:
 					method=p.method,
 					md5=p.md5,
 					postprocess_handler=postprocess_handler,
+					semaphore=semaphore,
 				)
-				progress_bar.update()
+				pbar.update()
 
 			async with anyio.create_task_group() as tg:
 				for param in params:

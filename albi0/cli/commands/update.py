@@ -1,7 +1,9 @@
 import os
 
+import anyio
 from asyncer import syncify
 import click
+from tqdm.asyncio import tqdm
 
 from albi0.update import updaters
 from albi0.utils import set_directory, timer
@@ -21,6 +23,14 @@ from albi0.utils import set_directory, timer
 	help='更新器名称，支持传入更新器/组名',
 )
 @click.option(
+	'-s',
+	'--semaphore-limit',
+	'--max-workers',
+	default=10,
+	type=int,
+	show_default=True,
+)
+@click.option(
 	'--version-only',
 	is_flag=True,
 	default=False,
@@ -35,6 +45,7 @@ async def update(
 	working_dir: str | None,
 	updater_name: str,
 	version_only: bool,
+	semaphore_limit: int,
 ) -> None:
 	patterns = patterns or []
 	os.chdir(working_dir or './')
@@ -67,8 +78,9 @@ async def update(
 				f'开始运行更新器...'
 			)
 			await updater.update(
-				progress_bar_message='下载资源文件',
+				progress_bar=tqdm(desc='下载资源文件', unit='file'),
 				patterns=patterns,
+				semaphore=anyio.Semaphore(semaphore_limit),
 			)
 			click.echo(
 				f'✅(<ゝω・)～☆更新完毕！'
