@@ -101,6 +101,19 @@ Updater(
 	downloader=downloader,
 )
 
+Updater(
+	'newseer.config',
+	'赛尔号AB包下载器 ConfigPackage部分',
+	version_manager=YooVersionManager(
+		'ConfigPackage',
+		remote_path='https://newseer.61.com/Assets/StandaloneWindows64/ConfigPackage/',
+		local_path=Path('./newseer/assetbundles/ConfigPackage/'),
+		manifest_factory=NewseerManifestParser(),
+		version_factory=int,
+	),
+	downloader=downloader,
+)
+
 
 Updater(
 	'newseer.pet',
