@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from pathlib import Path
 
 import anyio
 import click
@@ -61,7 +62,7 @@ class Updater:
 		items = manifest.items
 		self._log_message(f'需要更新的文件数量: {len(items)}')
 		tasks = [
-			DownloadParams(url=item.remote_filename, filename=local_fn)
+			DownloadParams(url=item.remote_filename, filename=Path(local_fn))
 			for local_fn, item in items.items()
 		]
 		if tasks:

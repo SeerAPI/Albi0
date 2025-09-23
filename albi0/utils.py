@@ -8,7 +8,7 @@ import itertools
 import os
 from pathlib import Path
 import time
-from typing import AnyStr
+from typing import AnyStr, TypeVar
 
 from tqdm import tqdm
 
@@ -111,8 +111,13 @@ def set_directory(path: PathTypes):
 		os.chdir(origin)
 
 
-def join_path(path: PathTypes, *args: PathTypes) -> Path:
-	return Path(path).joinpath(*args)
+T_Path = TypeVar('T_Path', bound=PathTypes)
+
+
+def join_path(path: T_Path, *args: PathTypes) -> T_Path:
+	import os
+
+	return type(path)(os.path.join(path, *args))
 
 
 def join_url(base: str, *urls: str) -> str:

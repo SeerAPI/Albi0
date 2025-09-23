@@ -23,6 +23,12 @@ from albi0.utils import set_directory, timer
 	help='更新器名称，支持传入更新器/组名',
 )
 @click.option(
+	'-m',
+	'--manifest-path',
+	type=click.Path(dir_okay=False, writable=True),
+	help='本地清单文件路径，如果未指定则使用更新器默认路径',
+)
+@click.option(
 	'-s',
 	'--semaphore-limit',
 	'--max-workers',
@@ -44,6 +50,7 @@ async def update(
 	patterns: list[str] | None,
 	working_dir: str | None,
 	updater_name: str,
+	manifest_path: str | None,
 	version_only: bool,
 	semaphore_limit: int,
 ) -> None:
@@ -65,6 +72,11 @@ async def update(
 		set_directory(working_dir or './'),
 	):
 		for updater in updater_set:
+			# 如果指定了自定义清单路径，设置到版本管理器中
+			if manifest_path:
+				click.echo(f'使用自定义清单文件路径: {manifest_path}')
+				updater.version_manager.local_manifest_path = manifest_path
+
 			click.echo(f'运行更新器：{updater.name}')
 			if version_only:
 				click.echo(

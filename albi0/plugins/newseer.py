@@ -94,12 +94,13 @@ Updater(
 	version_manager=YooVersionManager(
 		'DefaultPackage',
 		remote_path='https://newseer.61.com/Assets/StandaloneWindows64/DefaultPackage/',
-		local_path=Path('./newseer/assetbundles/DefaultPackage/'),
+		local_path='./newseer/assetbundles/DefaultPackage/',
 		manifest_factory=NewseerManifestParser(),
 		version_factory=int,
 	),
 	downloader=downloader,
 )
+
 
 Updater(
 	'newseer.config',
@@ -107,7 +108,7 @@ Updater(
 	version_manager=YooVersionManager(
 		'ConfigPackage',
 		remote_path='https://newseer.61.com/Assets/StandaloneWindows64/ConfigPackage/',
-		local_path=Path('./newseer/assetbundles/ConfigPackage/'),
+		local_path='./newseer/assetbundles/ConfigPackage/',
 		manifest_factory=NewseerManifestParser(),
 		version_factory=int,
 	),
@@ -121,12 +122,13 @@ Updater(
 	version_manager=YooVersionManager(
 		'PetAnimPackage',
 		remote_path='https://newseer.61.com/Assets/StandaloneWindows64/PetAnimPackage/',
-		local_path=Path('./newseer/assetbundles/PetAnimPackage/'),
+		local_path='./newseer/assetbundles/PetAnimPackage/',
 		manifest_factory=NewseerManifestParser(),
 		version_factory=int,
 	),
 	downloader=downloader,
 )
+
 
 Updater(
 	'newseer.startup',
@@ -134,7 +136,7 @@ Updater(
 	version_manager=YooVersionManager(
 		'StartupPackage',
 		remote_path='https://newseer.61.com/Assets/StandaloneWindows64/StartupPackage/',
-		local_path=Path('./newseer/assetbundles/StartupPackage/'),
+		local_path='./newseer/assetbundles/StartupPackage/',
 		manifest_factory=NewseerManifestParser(),
 		version_factory=int,
 	),

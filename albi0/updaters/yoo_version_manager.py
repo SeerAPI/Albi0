@@ -178,7 +178,7 @@ class YooVersionManager(AbstractVersionManager):
 		package_name: str,
 		*,
 		remote_path: str,
-		local_path: Path,
+		local_path: str,
 		manifest_factory: Callable[[bytes], PackageManifest] = YooManifestParser(),
 		version_factory: type[VersionProtocol | float] = Version,
 	) -> None:
@@ -189,10 +189,18 @@ class YooVersionManager(AbstractVersionManager):
 		self.manifest_factory = manifest_factory
 		self.version_factory = version_factory
 
-		self.manifest_fp = join_path(
+		self._local_manifest_path = join_path(
 			self.local_path, f'PackageManifest_{self.package_name}.json'
 		)
 		self.version_basename = f'PackageManifest_{self.package_name}.version'
+
+	@property
+	def local_manifest_path(self) -> str:
+		return self._local_manifest_path
+
+	@local_manifest_path.setter
+	def local_manifest_path(self, manifest_path: str) -> None:
+		self._local_manifest_path = manifest_path
 
 	def _simplify_manifest(self, data: PackageManifest) -> Manifest:
 		"""将远程清单转换为Manifest实例。"""
@@ -232,11 +240,12 @@ class YooVersionManager(AbstractVersionManager):
 		if not self.is_local_version_exists:
 			return _create_empty_manifest()
 
-		return Manifest.from_json(self.manifest_fp.read_bytes())
+		return Manifest.from_json(Path(self.local_manifest_path).read_bytes())
 
 	def save_manifest_to_local(self, manifest: Manifest) -> None:
-		self.manifest_fp.parent.mkdir(parents=True, exist_ok=True)
-		self.manifest_fp.write_text(manifest.to_json())
+		local_manifest_path = Path(self.local_manifest_path)
+		local_manifest_path.parent.mkdir(parents=True, exist_ok=True)
+		local_manifest_path.write_text(manifest.to_json())
 
 	@property
 	def is_version_outdated(self) -> bool:
@@ -249,4 +258,4 @@ class YooVersionManager(AbstractVersionManager):
 	@property
 	def is_local_version_exists(self) -> bool:
 		"""检查本地版本是否存在"""
-		return self.manifest_fp.is_file()
+		return Path(self.local_manifest_path).is_file()

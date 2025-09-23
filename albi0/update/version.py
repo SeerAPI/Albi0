@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import NamedTuple, NewType
 from typing_extensions import Self
 
 from dataclasses_json import DataClassJsonMixin, config
 import dataclasses_json.cfg
 
-LocalFileName = NewType('LocalFileName', Path)
+LocalFileName = NewType('LocalFileName', str)
 
 
 def register_path_encoder() -> None:
@@ -39,7 +38,7 @@ def encode_manifest_items(items: dict[LocalFileName, ManifestItem]) -> dict:
 
 def decode_manifest_items(items: dict) -> dict[LocalFileName, ManifestItem]:
 	return {
-		LocalFileName(Path(local_fn)): ManifestItem(
+		LocalFileName(local_fn): ManifestItem(
 			item['remote_filename'],
 			item['local_basename'],
 			bytes.fromhex(item['file_hash']),
@@ -92,6 +91,22 @@ class AbstractVersionManager(ABC):
 	@abstractmethod
 	def is_local_version_exists(self) -> bool:
 		"""本地版本是否存在"""
+		pass
+
+	@property
+	@abstractmethod
+	def local_manifest_path(self) -> str:
+		"""本地清单文件路径"""
+		pass
+
+	@local_manifest_path.setter
+	@abstractmethod
+	def local_manifest_path(self, manifest_path: str) -> None:
+		"""设置自定义清单文件路径
+
+		Args:
+			manifest_path: 自定义的清单文件路径
+		"""
 		pass
 
 	@abstractmethod

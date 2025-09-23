@@ -130,7 +130,7 @@ Updater(
 	version_manager=SeerProjectVersionManager(
 		'SpPackage',
 		remote_path='https://sp.61.com/source/taomee/Android/',
-		local_path=Path('./seerproject/assetbundles'),
+		local_path='./seerproject/assetbundles',
 	),
 	downloader=Downloader(),
 )
