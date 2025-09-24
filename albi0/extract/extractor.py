@@ -166,15 +166,6 @@ class Extractor:
 			) as pbar,
 		):
 
-			def export_single_obj(
-				obj_and_path: tuple['ObjectReader', ObjectPath],
-			) -> None:
-				obj, obj_path = obj_and_path
-				try:
-					export_obj(obj, obj_path)
-				except Exception as e:
-					logger.opt(exception=e).error(f'{obj_path} | {e}')
-
 			def export_wrap(env: Environment) -> None:
 				objs = handle_asset(env)
 				if not pbar.disable and pbar.total is None:
@@ -182,8 +173,7 @@ class Extractor:
 
 				# 使用多进程处理每个对象的导出
 				futures = [
-					executor.submit(export_single_obj, obj_and_path)
-					for obj_and_path in objs
+					executor.submit(export_obj, obj, obj_path) for obj, obj_path in objs
 				]
 				for future in futures:
 					future.add_done_callback(
