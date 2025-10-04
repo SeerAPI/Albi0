@@ -126,7 +126,14 @@ class Extractor:
 					obj, _ = self.asset_posthandler_group.handle(
 						obj, export_dir=export_dir
 					)
-					_result.append((obj, ObjectPath(PurePath(obj_path))))
+					# container 中的文件名不会保留大小写，需要手动替换
+					real_obj_path = PurePath(obj_path)
+					if name := obj.peek_name():
+						# 替换文件名但保留原有后缀
+						real_obj_path = real_obj_path.with_name(
+							name + real_obj_path.suffix
+						)
+					_result.append((obj, ObjectPath(real_obj_path)))
 				except StopExtractThisObject:
 					continue
 				except Exception as e:
