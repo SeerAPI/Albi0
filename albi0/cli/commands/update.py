@@ -37,6 +37,12 @@ from albi0.utils import set_directory, timer
 	show_default=True,
 )
 @click.option(
+	'--ignore-version',
+	is_flag=True,
+	default=False,
+	help='忽略版本号检查，仅检查资源清单变化',
+)
+@click.option(
 	'--version-only',
 	is_flag=True,
 	default=False,
@@ -53,6 +59,7 @@ async def update(
 	manifest_path: str | None,
 	version_only: bool,
 	semaphore_limit: int,
+	ignore_version: bool,
 ) -> None:
 	patterns = patterns or []
 	os.chdir(working_dir or './')
@@ -86,9 +93,13 @@ async def update(
 
 			click.echo(
 				f'本地版本：{updater.version_manager.load_local_version() or "无"}\n'
-				f'远程版本：{updater.version_manager.get_remote_version()}\n'
-				f'开始运行更新器...'
+				f'远程版本：{updater.version_manager.get_remote_version()}'
 			)
+			if not updater.version_manager.is_version_outdated and not ignore_version:
+				click.echo('版本最新，无需更新。')
+				continue
+
+			click.echo('开始更新...')
 			await updater.update(
 				progress_bar=tqdm(desc='下载资源文件', unit='file'),
 				patterns=patterns,
