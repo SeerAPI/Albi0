@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from enum import IntEnum
 from pathlib import Path
+import time
 from typing import Any, Protocol, TypedDict
 
 import httpx
@@ -220,7 +221,12 @@ class YooVersionManager(AbstractVersionManager):
 	def get_remote_version(self) -> str:
 		"""获取远程版本号"""
 		remote_version_url = join_url(self.remote_path, self.version_basename)
-		result = httpx.get(remote_version_url).text
+		response = httpx.get(
+			remote_version_url,
+			params={'t': int(time.time() * 1000)},
+		)
+		response.raise_for_status()
+		result = response.text
 		return result
 
 	def load_local_version(self) -> str:
@@ -232,8 +238,9 @@ class YooVersionManager(AbstractVersionManager):
 			self.remote_path,
 			f'PackageManifest_{self.package_name}_{self.get_remote_version()}.bytes',
 		)
-		req = httpx.get(remote_manifest_url)
-		manifest_dict = self.manifest_factory(req.content)
+		response = httpx.get(remote_manifest_url, params={'t': int(time.time() * 1000)})
+		response.raise_for_status()
+		manifest_dict = self.manifest_factory(response.content)
 		return self._simplify_manifest(manifest_dict)
 
 	def load_local_manifest(self) -> Manifest:
